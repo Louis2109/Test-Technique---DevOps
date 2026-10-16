@@ -1,0 +1,19 @@
+stages:
+  - build
+
+variables:
+  IMAGE: $CI_REGISTRY_IMAGE
+  DOCKER_TLS_CERTDIR: "/certs"
+
+build-and-push:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker build --pull -t "$IMAGE:$CI_COMMIT_SHORT_SHA" -t "$IMAGE:$CI_COMMIT_REF_SLUG" .
+    - docker push --all-tags "$IMAGE"
+  rules:
+    - if: $CI_COMMIT_BRANCH
