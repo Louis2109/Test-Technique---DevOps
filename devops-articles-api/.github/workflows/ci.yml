@@ -50,3 +50,49 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-local:
+    name: Deploy and Smoke Test on Runner
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy stack and run smoke tests
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          export APP_IMAGE="${{ env.REGISTRY }}/${REPO_LOWER}:${SHORT_SHA}"
+
+          echo "Pulling published image: ${APP_IMAGE}"
+          docker compose pull api
+
+          echo "Starting application stack (PostgreSQL + API)..."
+          docker compose up -d --no-build --wait
+
+          echo "Container status:"
+          docker compose ps
+
+          echo "Verifying /health endpoint..."
+          docker compose exec -T api wget -qO- http://localhost:3000/health
+
+          echo "Creating test article via API..."
+          curl -fsS -X POST http://localhost:3000/articles \
+            -H "Content-Type: application/json" \
+            -d '{"name":"DevOps Article","description":"Automated smoke test","price":19.99,"stock_quantity":5}'
+
+          echo "Listing articles..."
+          curl -fsS http://localhost:3000/articles
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose down -v
