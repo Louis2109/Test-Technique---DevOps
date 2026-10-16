@@ -1,0 +1,6 @@
+{
+  "name": "DevOps Articles API - CI/CD Pipeline",
+  "description": "DevOps technical test: Docker containerization, docker-compose and automated CI/CD pipeline for articles API.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
