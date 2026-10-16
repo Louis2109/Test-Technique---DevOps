@@ -1,0 +1,20 @@
+# Dependency directories
+node_modules
+
+# Git metadata
+.git
+.gitignore
+
+# Environment files and secrets
+.env
+.env.*
+
+# Tests and documentation
+tests
+*.md
+
+# Container and CI/CD configurations
+Dockerfile
+docker-compose.yml
+.gitlab-ci.yml
+.github
